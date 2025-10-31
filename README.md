@@ -37,6 +37,14 @@ For development with editable installation:
 pip install -e .
 ```
 
+### From GitHub
+
+Install directly from the GitHub repository:
+
+```bash
+pip install git+https://github.com/hragbalian/pyfuncscribe.git
+```
+
 ## Usage
 
 ### Basic Usage
