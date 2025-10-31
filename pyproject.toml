@@ -29,8 +29,8 @@ classifiers = [
 pyfuncscribe = "pyfuncscribe.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/yourusername/pyfuncscribe"
-Repository = "https://github.com/yourusername/pyfuncscribe"
+Homepage = "https://github.com/hragbalian/pyfuncscribe"
+Repository = "https://github.com/hragbalian/pyfuncscribe"
 
 [tool.setuptools.packages.find]
 where = ["src"]
