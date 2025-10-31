@@ -62,8 +62,8 @@ Functions found ({len(functions)} total, showing first 50):
 Provide only the description, no additional commentary."""
 
             message = client.messages.create(
-                model="claude-3-5-sonnet-20241022",
-                max_tokens=200,
+                model="claude-haiku-4-5-20251001",
+                max_tokens=20000,
                 messages=[{"role": "user", "content": prompt}],
             )
 
