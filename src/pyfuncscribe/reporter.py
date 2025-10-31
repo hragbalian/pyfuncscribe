@@ -1,7 +1,9 @@
 """Module for generating markdown reports from function information."""
 
+import os
+import sys
 from collections import defaultdict
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from .extractor import FunctionInfo
 
@@ -17,6 +19,65 @@ class MarkdownReporter:
             brief_docstring: If True, include only first line of docstring
         """
         self.brief_docstring = brief_docstring
+
+    def _generate_description_with_llm(
+        self, functions: List[FunctionInfo]
+    ) -> Optional[str]:
+        """
+        Generate a description of the codebase using Claude API.
+
+        Args:
+            functions: List of FunctionInfo objects
+
+        Returns:
+            Generated description or None if API key is not available
+        """
+        api_key = os.environ.get("ANTHROPIC_API_KEY")
+        if not api_key:
+            print(
+                "Warning: ANTHROPIC_API_KEY environment variable not set. Skipping description generation.",
+                file=sys.stderr,
+            )
+            return None
+
+        try:
+            from anthropic import Anthropic
+
+            client = Anthropic(api_key=api_key)
+
+            # Create a summary of functions for the LLM
+            func_summary = []
+            for func in functions[
+                :50
+            ]:  # Limit to first 50 functions to manage token usage
+                func_summary.append(
+                    f"- {func.name} in {func.file_path}: {func.docstring[:100] if func.docstring else 'No docstring'}"
+                )
+
+            prompt = f"""Based on the following Python functions found in a codebase, write a brief 2-3 sentence description of what this codebase does. Focus on the main purpose and functionality.
+
+Functions found ({len(functions)} total, showing first 50):
+{chr(10).join(func_summary)}
+
+Provide only the description, no additional commentary."""
+
+            message = client.messages.create(
+                model="claude-3-5-sonnet-20241022",
+                max_tokens=200,
+                messages=[{"role": "user", "content": prompt}],
+            )
+
+            return message.content[0].text.strip()
+
+        except ImportError:
+            print(
+                "Warning: anthropic package not installed. Install with: pip install anthropic",
+                file=sys.stderr,
+            )
+            return None
+        except Exception as e:
+            print(f"Warning: Failed to generate description: {e}", file=sys.stderr)
+            return None
 
     def _get_docstring_summary(self, docstring: str) -> str:
         """
@@ -131,12 +192,15 @@ class MarkdownReporter:
 
         return "\n".join(lines)
 
-    def generate_report(self, functions: List[FunctionInfo]) -> str:
+    def generate_report(
+        self, functions: List[FunctionInfo], add_description: bool = False
+    ) -> str:
         """
         Generate a complete markdown report from function information.
 
         Args:
             functions: List of FunctionInfo objects
+            add_description: If True, add an LLM-generated description
 
         Returns:
             Complete markdown report as a string
@@ -146,6 +210,18 @@ class MarkdownReporter:
         # Report header
         lines.append("# Python Functions Report")
         lines.append("")
+
+        # Add LLM-generated description if requested
+        if add_description:
+            description = self._generate_description_with_llm(functions)
+            if description:
+                lines.append("## Description")
+                lines.append("")
+                lines.append(description)
+                lines.append("")
+                lines.append("---")
+                lines.append("")
+
         lines.append(f"Total functions found: **{len(functions)}**")
         lines.append("")
         lines.append("---")

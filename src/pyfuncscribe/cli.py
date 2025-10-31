@@ -49,7 +49,21 @@ Examples:
         help="Include only the first line of docstrings (brief summary)",
     )
 
-    parser.add_argument("-v", "--version", action="version", version="%(prog)s 1.0.0")
+    parser.add_argument(
+        "-c",
+        "--include-commented",
+        action="store_true",
+        help="Include functions that are commented out (default: ignore commented code)",
+    )
+
+    parser.add_argument(
+        "-d",
+        "--add-description",
+        action="store_true",
+        help="Add an LLM-generated description to the report using Claude API (requires ANTHROPIC_API_KEY environment variable)",
+    )
+
+    parser.add_argument("-v", "--version", action="version", version="%(prog)s 0.0.1")
 
     return parser.parse_args()
 
@@ -70,7 +84,9 @@ def main() -> None:
 
     # Extract functions
     try:
-        extractor = FunctionExtractor(root_dir=args.root)
+        extractor = FunctionExtractor(
+            root_dir=args.root, include_commented=args.include_commented
+        )
         functions = extractor.extract_all_functions()
 
         if not functions:
@@ -78,7 +94,9 @@ def main() -> None:
 
         # Generate report
         reporter = MarkdownReporter(brief_docstring=args.brief)
-        report = reporter.generate_report(functions)
+        report = reporter.generate_report(
+            functions, add_description=args.add_description
+        )
 
         # Output report
         if args.output:

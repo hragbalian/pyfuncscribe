@@ -4,10 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyfuncscribe"
-version = "1.0.0"
+version = "0.0.1"
 description = "A CLI tool to generate comprehensive markdown reports of Python functions in a codebase"
 readme = "README.md"
 requires-python = ">=3.8"
+dependencies = [
+    "anthropic>=0.39.0",
+]
 license = {text = "MIT"}
 authors = [
     {name = "PyFuncScribe Contributors"}
@@ -34,3 +37,24 @@ Repository = "https://github.com/hragbalian/pyfuncscribe"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+version_variables = ["src/pyfuncscribe/__init__.py:__version__"]
+build_command = "pip install build && python -m build"
+major_on_zero = false
+tag_format = "v{version}"
+
+[tool.semantic_release.branches.main]
+match = "main"
+prerelease = false
+
+[tool.semantic_release.commit_parser_options]
+allowed_tags = ["feat", "fix", "docs", "style", "refactor", "perf", "test", "build", "ci", "chore"]
+minor_tags = ["feat"]
+patch_tags = ["fix", "perf"]
+
+[tool.semantic_release.changelog]
+template_dir = "templates"
+changelog_file = "CHANGELOG.md"
+exclude_commit_patterns = []

@@ -26,14 +26,16 @@ class FunctionInfo:
 class FunctionExtractor:
     """Extract function information from Python files."""
 
-    def __init__(self, root_dir: str = "."):
+    def __init__(self, root_dir: str = ".", include_commented: bool = False):
         """
         Initialize the function extractor.
 
         Args:
             root_dir: Root directory to start searching from
+            include_commented: If True, include functions that are commented out
         """
         self.root_dir = Path(root_dir).resolve()
+        self.include_commented = include_commented
 
     def find_python_files(self) -> List[Path]:
         """
@@ -48,6 +50,25 @@ class FunctionExtractor:
                 if file.endswith(".py"):
                     python_files.append(Path(root) / file)
         return sorted(python_files)
+
+    def _is_function_commented(self, content: str, line_number: int) -> bool:
+        """
+        Check if a function definition is commented out.
+
+        Args:
+            content: Full file content
+            line_number: Line number where function starts (1-indexed)
+
+        Returns:
+            True if the function definition line is commented out
+        """
+        lines = content.split("\n")
+        if line_number < 1 or line_number > len(lines):
+            return False
+
+        # Get the line (convert to 0-indexed)
+        line = lines[line_number - 1].lstrip()
+        return line.startswith("#")
 
     def extract_functions_from_file(self, file_path: Path) -> List[FunctionInfo]:
         """
@@ -68,6 +89,12 @@ class FunctionExtractor:
 
             for node in ast.walk(tree):
                 if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    # Skip commented functions unless explicitly included
+                    if not self.include_commented and self._is_function_commented(
+                        content, node.lineno
+                    ):
+                        continue
+
                     func_info = self._extract_function_info(node, file_path, content)
                     if func_info:
                         functions.append(func_info)

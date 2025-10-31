@@ -5,6 +5,8 @@ A simple, efficient Python CLI tool that generates comprehensive markdown report
 ## Features
 
 - Recursively traverses directories to find all Python files
+- **Automatically ignores commented-out code** with option to include it
+- **Optional LLM-generated codebase descriptions** using Claude API
 - Extracts detailed function information including:
   - Function name and signature
   - Complete or brief docstrings
@@ -16,6 +18,7 @@ A simple, efficient Python CLI tool that generates comprehensive markdown report
 - Generates well-organized markdown reports grouped by directory
 - Efficient and minimal design for regular use
 - Flexible output options (stdout or file)
+- **Automated semantic versioning** via GitHub Actions
 
 ## Installation
 
@@ -85,12 +88,33 @@ pyfuncscribe --brief
 pyfuncscribe -b
 ```
 
-### Combined Options
+### Include Commented-Out Code
 
-Scan a specific directory, use brief docstrings, and save to file:
+By default, commented-out functions are ignored. To include them:
 
 ```bash
-pyfuncscribe -r src -b -o docs/api_reference.md
+pyfuncscribe --include-commented
+# or
+pyfuncscribe -c
+```
+
+### Add LLM-Generated Description
+
+Generate a description of your codebase using Claude AI (requires `ANTHROPIC_API_KEY` environment variable):
+
+```bash
+export ANTHROPIC_API_KEY="your-api-key"
+pyfuncscribe --add-description -o report.md
+# or
+pyfuncscribe -d -o report.md
+```
+
+### Combined Options
+
+Scan a specific directory, include commented code, add AI description, use brief docstrings, and save to file:
+
+```bash
+pyfuncscribe -r src -c -d -b -o docs/api_reference.md
 ```
 
 ## Command-Line Options
@@ -100,6 +124,8 @@ pyfuncscribe -r src -b -o docs/api_reference.md
 | `--root` | `-r` | Root directory to start the search from | Current directory (`.`) |
 | `--output` | `-o` | Output file path for the markdown report | stdout |
 | `--brief` | `-b` | Include only the first line of docstrings | Full docstrings |
+| `--include-commented` | `-c` | Include functions that are commented out | Ignore commented code |
+| `--add-description` | `-d` | Add LLM-generated description (requires `ANTHROPIC_API_KEY`) | No description |
 | `--version` | `-v` | Show version information | - |
 | `--help` | `-h` | Show help message | - |
 
@@ -163,7 +189,21 @@ def extract_functions(file_path: str) -> List[FunctionInfo]
 ## Requirements
 
 - Python 3.8 or higher
-- No external dependencies (uses only Python standard library)
+- `anthropic` package (optional, only required for `--add-description` feature)
+
+### Installing Optional Dependencies
+
+For LLM-generated descriptions:
+
+```bash
+pip install anthropic
+```
+
+Or install with optional dependencies:
+
+```bash
+pip install pyfuncscribe[ai]
+```
 
 ## Project Structure
 
@@ -202,3 +242,21 @@ Contributions are welcome! Feel free to submit issues or pull requests.
 - Use the `--brief` flag for quick overviews and full docstrings for detailed documentation
 - Combine with version control to track how your codebase functions evolve over time
 - Use output redirection or the `-o` flag to save reports for future reference
+- The `--add-description` feature provides a high-level overview perfect for README files or project documentation
+- By default, commented-out code is ignored to keep reports clean and focused on active code
+
+## Semantic Versioning
+
+This project uses semantic versioning with automated releases via GitHub Actions. Version bumps are determined by commit messages following the [Conventional Commits](https://www.conventionalcommits.org/) specification:
+
+- `feat:` - New feature (minor version bump)
+- `fix:` - Bug fix (patch version bump)
+- `BREAKING CHANGE:` - Breaking change (major version bump)
+- `docs:`, `style:`, `refactor:`, `perf:`, `test:`, `chore:` - No version bump
+
+Example commit messages:
+```bash
+git commit -m "feat: add support for async generators"
+git commit -m "fix: handle empty docstrings correctly"
+git commit -m "docs: update installation instructions"
+```
