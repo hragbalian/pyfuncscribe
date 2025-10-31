@@ -2,6 +2,15 @@
 
 
 
+## v0.2.0 (2025-10-31)
+
+### Feature
+
+* feat: upgraded claude model to claude-haiku-4-5-20251001 ([`5d7d630`](https://github.com/hragbalian/pyfuncscribe/commit/5d7d630408c9602870a5301be0e09903fe322824))
+
+* feat: upgraded claude model to claude-haiku-4-5-20251001 ([`c741dc2`](https://github.com/hragbalian/pyfuncscribe/commit/c741dc2e9a1a80c4d5d94f8bfe9a7964663664bf))
+
+
 ## v0.1.0 (2025-10-31)
 
 ### Feature
