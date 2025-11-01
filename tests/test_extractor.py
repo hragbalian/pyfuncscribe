@@ -3,7 +3,6 @@
 import tempfile
 from pathlib import Path
 
-
 from pyfuncscribe.extractor import FunctionExtractor
 
 
@@ -44,6 +43,59 @@ class TestPythonFileFinding:
         py_files = [f for f in files if "pyfuncscribe" in str(f)]
         assert len(py_files) > 0
 
+    def test_find_python_files_recursive_true(self):
+        """Test finding Python files with recursive=True."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create nested directory structure
+            nested_dir = Path(tmpdir) / "nested" / "deep"
+            nested_dir.mkdir(parents=True)
+
+            # Create Python files at different levels
+            root_file = Path(tmpdir) / "root.py"
+            root_file.write_text("def root(): pass")
+
+            nested_file = (Path(tmpdir) / "nested") / "nested.py"
+            nested_file.write_text("def nested(): pass")
+
+            deep_file = nested_dir / "deep.py"
+            deep_file.write_text("def deep(): pass")
+
+            # Search with recursive=True (default)
+            extractor = FunctionExtractor(root_dir=tmpdir, recursive=True)
+            files = extractor.find_python_files()
+
+            # Should find all three files
+            assert len(files) == 3
+            file_names = [f.name for f in files]
+            assert "root.py" in file_names
+            assert "nested.py" in file_names
+            assert "deep.py" in file_names
+
+    def test_find_python_files_recursive_false(self):
+        """Test finding Python files with recursive=False."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create nested directory structure
+            nested_dir = Path(tmpdir) / "nested" / "deep"
+            nested_dir.mkdir(parents=True)
+
+            # Create Python files at different levels
+            root_file = Path(tmpdir) / "root.py"
+            root_file.write_text("def root(): pass")
+
+            nested_file = (Path(tmpdir) / "nested") / "nested.py"
+            nested_file.write_text("def nested(): pass")
+
+            deep_file = nested_dir / "deep.py"
+            deep_file.write_text("def deep(): pass")
+
+            # Search with recursive=False
+            extractor = FunctionExtractor(root_dir=tmpdir, recursive=False)
+            files = extractor.find_python_files()
+
+            # Should only find the root file
+            assert len(files) == 1
+            assert files[0].name == "root.py"
+
 
 class TestFunctionExtraction:
     """Test function extraction from Python files."""
@@ -67,6 +119,66 @@ class TestFunctionExtraction:
         # Should have functions from multiple modules
         file_paths = set(f.file_path for f in all_functions)
         assert len(file_paths) > 1
+
+    def test_extract_all_functions_recursive_true(self):
+        """Test extracting all functions with recursive=True."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create nested directory structure
+            nested_dir = Path(tmpdir) / "nested"
+            nested_dir.mkdir()
+
+            root_file = Path(tmpdir) / "root.py"
+            root_file.write_text("""
+def root_func():
+    '''Root function.'''
+    pass
+""")
+
+            nested_file = nested_dir / "nested.py"
+            nested_file.write_text("""
+def nested_func():
+    '''Nested function.'''
+    pass
+""")
+
+            # Extract with recursive=True
+            extractor = FunctionExtractor(root_dir=tmpdir, recursive=True)
+            functions = extractor.extract_all_functions()
+
+            # Should find both functions
+            assert len(functions) == 2
+            function_names = [f.name for f in functions]
+            assert "root_func" in function_names
+            assert "nested_func" in function_names
+
+    def test_extract_all_functions_recursive_false(self):
+        """Test extracting all functions with recursive=False."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create nested directory structure
+            nested_dir = Path(tmpdir) / "nested"
+            nested_dir.mkdir()
+
+            root_file = Path(tmpdir) / "root.py"
+            root_file.write_text("""
+def root_func():
+    '''Root function.'''
+    pass
+""")
+
+            nested_file = nested_dir / "nested.py"
+            nested_file.write_text("""
+def nested_func():
+    '''Nested function.'''
+    pass
+""")
+
+            # Extract with recursive=False
+            extractor = FunctionExtractor(root_dir=tmpdir, recursive=False)
+            functions = extractor.extract_all_functions()
+
+            # Should only find the root function
+            assert len(functions) == 1
+            assert functions[0].name == "root_func"
 
     def test_function_info_has_required_fields(self):
         """Test that extracted function info has all required fields."""

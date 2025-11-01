@@ -52,6 +52,18 @@ class TestParseArgs:
             args = parse_args()
             assert args.include_commented is True
 
+    def test_parse_recursive_flag_default(self):
+        """Test that recursive flag defaults to True."""
+        with patch("sys.argv", ["pyfuncscribe"]):
+            args = parse_args()
+            assert args.recursive is True
+
+    def test_parse_no_recursive_flag(self):
+        """Test parsing --no-recursive flag to disable recursive search."""
+        with patch("sys.argv", ["pyfuncscribe", "--no-recursive"]):
+            args = parse_args()
+            assert args.recursive is False
+
 
 class TestMainFunctionality:
     """Test main CLI functionality."""
@@ -252,6 +264,74 @@ Old description.
 
         has_changed = reporter._has_content_changed(report1, report2)
         assert has_changed is False, "No changes should be detected for identical code"
+
+
+class TestRecursiveFlag:
+    """Test recursive flag functionality in CLI."""
+
+    def test_main_with_no_recursive_flag(self, temp_dir, capsys):
+        """Test main with --no-recursive flag to only search root directory."""
+        # Create a nested directory structure with Python files
+        nested_dir = temp_dir / "nested"
+        nested_dir.mkdir()
+
+        root_file = temp_dir / "root_function.py"
+        root_file.write_text("""
+def root_func():
+    '''A function in root directory.'''
+    pass
+""")
+
+        nested_file = nested_dir / "nested_function.py"
+        nested_file.write_text("""
+def nested_func():
+    '''A function in nested directory.'''
+    pass
+""")
+
+        # Run with --no-recursive flag
+        with patch(
+            "sys.argv",
+            ["pyfuncscribe", "-r", str(temp_dir), "--no-recursive"],
+        ):
+            main()
+
+        captured = capsys.readouterr()
+        # Should only find the root function
+        assert "root_func" in captured.out
+        assert "nested_func" not in captured.out
+
+    def test_main_with_recursive_flag_default(self, temp_dir, capsys):
+        """Test main with recursive search enabled by default."""
+        # Create a nested directory structure
+        nested_dir = temp_dir / "nested"
+        nested_dir.mkdir()
+
+        root_file = temp_dir / "root_function.py"
+        root_file.write_text("""
+def root_func():
+    '''A function in root directory.'''
+    pass
+""")
+
+        nested_file = nested_dir / "nested_function.py"
+        nested_file.write_text("""
+def nested_func():
+    '''A function in nested directory.'''
+    pass
+""")
+
+        # Run without --no-recursive flag (default is recursive)
+        with patch(
+            "sys.argv",
+            ["pyfuncscribe", "-r", str(temp_dir)],
+        ):
+            main()
+
+        captured = capsys.readouterr()
+        # Should find both functions
+        assert "root_func" in captured.out
+        assert "nested_func" in captured.out
 
 
 class TestCLIMessages:

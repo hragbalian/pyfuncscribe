@@ -63,6 +63,21 @@ Examples:
         help="Add an LLM-generated description to the report using Claude API (requires ANTHROPIC_API_KEY environment variable)",
     )
 
+    parser.add_argument(
+        "--recursive",
+        action="store_true",
+        default=True,
+        dest="recursive",
+        help="Recursively search subdirectories for Python files (default: True)",
+    )
+
+    parser.add_argument(
+        "--no-recursive",
+        action="store_false",
+        dest="recursive",
+        help="Do not recursively search subdirectories (only search the specified directory)",
+    )
+
     parser.add_argument("-v", "--version", action="version", version="%(prog)s 0.0.1")
 
     return parser.parse_args()
@@ -85,7 +100,9 @@ def main() -> None:
     # Extract functions
     try:
         extractor = FunctionExtractor(
-            root_dir=args.root, include_commented=args.include_commented
+            root_dir=args.root,
+            include_commented=args.include_commented,
+            recursive=args.recursive,
         )
         functions = extractor.extract_all_functions()
 

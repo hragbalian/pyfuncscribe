@@ -26,29 +26,48 @@ class FunctionInfo:
 class FunctionExtractor:
     """Extract function information from Python files."""
 
-    def __init__(self, root_dir: str = ".", include_commented: bool = False):
+    def __init__(
+        self,
+        root_dir: str = ".",
+        include_commented: bool = False,
+        recursive: bool = True,
+    ):
         """
         Initialize the function extractor.
 
         Args:
             root_dir: Root directory to start searching from
             include_commented: If True, include functions that are commented out
+            recursive: If True, recursively search subdirectories; if False, only search root directory
         """
         self.root_dir = Path(root_dir).resolve()
         self.include_commented = include_commented
+        self.recursive = recursive
 
     def find_python_files(self) -> List[Path]:
         """
-        Recursively find all Python files in the root directory.
+        Find all Python files in the root directory.
+
+        If recursive is True, searches recursively through subdirectories.
+        If recursive is False, only searches the root directory.
 
         Returns:
             List of Path objects for Python files
         """
         python_files = []
-        for root, _, files in os.walk(self.root_dir):
-            for file in files:
-                if file.endswith(".py"):
-                    python_files.append(Path(root) / file)
+
+        if self.recursive:
+            # Recursively search all subdirectories
+            for root, _, files in os.walk(self.root_dir):
+                for file in files:
+                    if file.endswith(".py"):
+                        python_files.append(Path(root) / file)
+        else:
+            # Only search the root directory (non-recursive)
+            for file in self.root_dir.iterdir():
+                if file.is_file() and file.name.endswith(".py"):
+                    python_files.append(file)
+
         return sorted(python_files)
 
     def _is_function_commented(self, content: str, line_number: int) -> bool:
