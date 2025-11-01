@@ -1,12 +1,12 @@
 # Python Functions Report
 
-Total functions found: **16**
+Total functions found: **17**
 
 ---
 
 ## Table of Contents
 
-- [pyfuncscribe](#directory-pyfuncscribe)
+- [(root)](#directory-)
   - [__init__](#__init__)
   - [__init__](#__init__)
   - [_build_signature](#_build_signature)
@@ -16,6 +16,7 @@ Total functions found: **16**
   - [_generate_description_with_llm](#_generate_description_with_llm)
   - [_get_docstring_summary](#_get_docstring_summary)
   - [_group_functions_by_directory](#_group_functions_by_directory)
+  - [_has_content_changed](#_has_content_changed)
   - [_is_function_commented](#_is_function_commented)
   - [extract_all_functions](#extract_all_functions)
   - [extract_functions_from_file](#extract_functions_from_file)
@@ -26,13 +27,13 @@ Total functions found: **16**
 
 ---
 
-## Directory: `pyfuncscribe`
+## Directory: `(root)`
 
-Functions in this directory: **16**
+Functions in this directory: **17**
 
 ### `__init__`
 
-**File:** `pyfuncscribe/extractor.py:29`
+**File:** `extractor.py:29`
 
 **Signature:**
 ```python
@@ -51,7 +52,7 @@ def __init__(self, root_dir: str, include_commented: bool)
 
 ### `__init__`
 
-**File:** `pyfuncscribe/reporter.py:14`
+**File:** `reporter.py:14`
 
 **Signature:**
 ```python
@@ -69,7 +70,7 @@ def __init__(self, brief_docstring: bool)
 
 ### `_build_signature`
 
-**File:** `pyfuncscribe/extractor.py:202`
+**File:** `extractor.py:202`
 
 **Signature:**
 ```python
@@ -89,7 +90,7 @@ def _build_signature(self, node: ast.FunctionDef) -> str
 
 ### `_extract_arguments`
 
-**File:** `pyfuncscribe/extractor.py:160`
+**File:** `extractor.py:160`
 
 **Signature:**
 ```python
@@ -109,7 +110,7 @@ def _extract_arguments(self, args: ast.arguments) -> List[str]
 
 ### `_extract_function_info`
 
-**File:** `pyfuncscribe/extractor.py:107`
+**File:** `extractor.py:107`
 
 **Signature:**
 ```python
@@ -131,7 +132,7 @@ def _extract_function_info(self, node: ast.FunctionDef, file_path: Path, content
 
 ### `_format_function_section`
 
-**File:** `pyfuncscribe/reporter.py:124`
+**File:** `reporter.py:166`
 
 **Signature:**
 ```python
@@ -151,7 +152,7 @@ def _format_function_section(self, func: FunctionInfo) -> str
 
 ### `_generate_description_with_llm`
 
-**File:** `pyfuncscribe/reporter.py:23`
+**File:** `reporter.py:65`
 
 **Signature:**
 ```python
@@ -171,7 +172,7 @@ def _generate_description_with_llm(self, functions: List[FunctionInfo]) -> Optio
 
 ### `_get_docstring_summary`
 
-**File:** `pyfuncscribe/reporter.py:82`
+**File:** `reporter.py:124`
 
 **Signature:**
 ```python
@@ -191,7 +192,7 @@ def _get_docstring_summary(self, docstring: str) -> str
 
 ### `_group_functions_by_directory`
 
-**File:** `pyfuncscribe/reporter.py:102`
+**File:** `reporter.py:144`
 
 **Signature:**
 ```python
@@ -209,9 +210,30 @@ def _group_functions_by_directory(self, functions: List[FunctionInfo]) -> Dict[s
 
 ---
 
+### `_has_content_changed`
+
+**File:** `reporter.py:23`
+
+**Signature:**
+```python
+def _has_content_changed(self, existing_content: str, new_content_without_description: str) -> bool
+```
+
+**Arguments:**
+- `self`
+- `existing_content: str`
+- `new_content_without_description: str`
+
+**Returns:** `bool`
+
+**Documentation:**
+> Check if the report content has changed by comparing non-description sections.
+
+---
+
 ### `_is_function_commented`
 
-**File:** `pyfuncscribe/extractor.py:54`
+**File:** `extractor.py:54`
 
 **Signature:**
 ```python
@@ -232,7 +254,7 @@ def _is_function_commented(self, content: str, line_number: int) -> bool
 
 ### `extract_all_functions`
 
-**File:** `pyfuncscribe/extractor.py:224`
+**File:** `extractor.py:224`
 
 **Signature:**
 ```python
@@ -251,7 +273,7 @@ def extract_all_functions(self) -> List[FunctionInfo]
 
 ### `extract_functions_from_file`
 
-**File:** `pyfuncscribe/extractor.py:73`
+**File:** `extractor.py:73`
 
 **Signature:**
 ```python
@@ -271,7 +293,7 @@ def extract_functions_from_file(self, file_path: Path) -> List[FunctionInfo]
 
 ### `find_python_files`
 
-**File:** `pyfuncscribe/extractor.py:40`
+**File:** `extractor.py:40`
 
 **Signature:**
 ```python
@@ -290,17 +312,18 @@ def find_python_files(self) -> List[Path]
 
 ### `generate_report`
 
-**File:** `pyfuncscribe/reporter.py:195`
+**File:** `reporter.py:237`
 
 **Signature:**
 ```python
-def generate_report(self, functions: List[FunctionInfo], add_description: bool) -> str
+def generate_report(self, functions: List[FunctionInfo], add_description: bool, include_description: bool) -> str
 ```
 
 **Arguments:**
 - `self`
 - `functions: List[FunctionInfo]`
 - `add_description: bool`
+- `include_description: bool`
 
 **Returns:** `str`
 
@@ -311,7 +334,7 @@ def generate_report(self, functions: List[FunctionInfo], add_description: bool) 
 
 ### `main`
 
-**File:** `pyfuncscribe/cli.py:71`
+**File:** `cli.py:71`
 
 **Signature:**
 ```python
@@ -327,7 +350,7 @@ def main() -> None
 
 ### `parse_args`
 
-**File:** `pyfuncscribe/cli.py:11`
+**File:** `cli.py:11`
 
 **Signature:**
 ```python

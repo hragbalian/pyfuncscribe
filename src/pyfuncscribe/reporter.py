@@ -33,24 +33,28 @@ class MarkdownReporter:
         Returns:
             True if content has changed, False otherwise
         """
-        # Extract the main content (everything after the description section if it exists)
-        # We compare the content structure and function listings
+        # Extract the comparable parts by removing headers and descriptions
+        # We want to compare from "Total functions found" onwards to catch all changes
         existing_lines = existing_content.strip().split("\n")
         new_lines = new_content_without_description.strip().split("\n")
 
-        # Find where the description ends in existing content (if it exists)
+        # Find the start of actual content (at "Total functions found")
+        # This works for both files with and without LLM description
         existing_content_start = 0
         for i, line in enumerate(existing_lines):
-            if line.strip() == "---" and i > 0:
-                # Check if this is after a description section
-                if "## Description" in "\n".join(existing_lines[:i]):
-                    existing_content_start = i + 1
-                    break
+            if "Total functions found:" in line:
+                existing_content_start = i
+                break
 
-        # Extract comparable sections (everything that's not the description)
-        # Compare the function count and table of contents to detect changes
+        new_content_start = 0
+        for i, line in enumerate(new_lines):
+            if "Total functions found:" in line:
+                new_content_start = i
+                break
+
+        # Extract the content from "Total functions found" onwards
         existing_comparable = "\n".join(existing_lines[existing_content_start:])
-        new_comparable = "\n".join(new_lines)
+        new_comparable = "\n".join(new_lines[new_content_start:])
 
         # Normalize whitespace for comparison
         existing_normalized = " ".join(existing_comparable.split())
