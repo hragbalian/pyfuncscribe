@@ -20,6 +20,44 @@ class MarkdownReporter:
         """
         self.brief_docstring = brief_docstring
 
+    def _has_content_changed(
+        self, existing_content: str, new_content_without_description: str
+    ) -> bool:
+        """
+        Check if the report content has changed by comparing non-description sections.
+
+        Args:
+            existing_content: The existing report file content
+            new_content_without_description: The newly generated report without LLM description
+
+        Returns:
+            True if content has changed, False otherwise
+        """
+        # Extract the main content (everything after the description section if it exists)
+        # We compare the content structure and function listings
+        existing_lines = existing_content.strip().split("\n")
+        new_lines = new_content_without_description.strip().split("\n")
+
+        # Find where the description ends in existing content (if it exists)
+        existing_content_start = 0
+        for i, line in enumerate(existing_lines):
+            if line.strip() == "---" and i > 0:
+                # Check if this is after a description section
+                if "## Description" in "\n".join(existing_lines[:i]):
+                    existing_content_start = i + 1
+                    break
+
+        # Extract comparable sections (everything that's not the description)
+        # Compare the function count and table of contents to detect changes
+        existing_comparable = "\n".join(existing_lines[existing_content_start:])
+        new_comparable = "\n".join(new_lines)
+
+        # Normalize whitespace for comparison
+        existing_normalized = " ".join(existing_comparable.split())
+        new_normalized = " ".join(new_comparable.split())
+
+        return existing_normalized != new_normalized
+
     def _generate_description_with_llm(
         self, functions: List[FunctionInfo]
     ) -> Optional[str]:
@@ -193,7 +231,10 @@ Provide only the description, no additional commentary."""
         return "\n".join(lines)
 
     def generate_report(
-        self, functions: List[FunctionInfo], add_description: bool = False
+        self,
+        functions: List[FunctionInfo],
+        add_description: bool = False,
+        include_description: bool = True,
     ) -> str:
         """
         Generate a complete markdown report from function information.
@@ -201,6 +242,7 @@ Provide only the description, no additional commentary."""
         Args:
             functions: List of FunctionInfo objects
             add_description: If True, add an LLM-generated description
+            include_description: If False, skip adding the description (used for content comparison)
 
         Returns:
             Complete markdown report as a string
@@ -212,7 +254,7 @@ Provide only the description, no additional commentary."""
         lines.append("")
 
         # Add LLM-generated description if requested
-        if add_description:
+        if add_description and include_description:
             description = self._generate_description_with_llm(functions)
             if description:
                 lines.append("## Description")

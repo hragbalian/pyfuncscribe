@@ -94,13 +94,37 @@ def main() -> None:
 
         # Generate report
         reporter = MarkdownReporter(brief_docstring=args.brief)
+
+        # Check if output file exists and if we should skip LLM description generation
+        should_add_description = args.add_description
+        output_path = Path(args.output) if args.output else None
+
+        if output_path and output_path.exists() and should_add_description:
+            # File exists and user wants description - check if content has changed
+            existing_content = output_path.read_text(encoding="utf-8")
+
+            # Generate report without description to check if anything changed
+            report_without_description = reporter.generate_report(
+                functions, add_description=False, include_description=False
+            )
+
+            # Check if content has changed
+            if not reporter._has_content_changed(
+                existing_content, report_without_description
+            ):
+                print(
+                    "Info: No changes detected in codebase. Skipping LLM description regeneration.",
+                    file=sys.stderr,
+                )
+                should_add_description = False
+
+        # Generate final report with or without description based on detection
         report = reporter.generate_report(
-            functions, add_description=args.add_description
+            functions, add_description=should_add_description
         )
 
         # Output report
-        if args.output:
-            output_path = Path(args.output)
+        if output_path:
             output_path.parent.mkdir(parents=True, exist_ok=True)
             with open(output_path, "w", encoding="utf-8") as f:
                 f.write(report)
