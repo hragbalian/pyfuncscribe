@@ -2,6 +2,13 @@
 
 
 
+## v0.3.0 (2025-11-01)
+
+### Feature
+
+* feat: runs llm only when changes are detected ([`6bd4aed`](https://github.com/hragbalian/pyfuncscribe/commit/6bd4aedb5d31276976c921d4eec3c67360dee44e))
+
+
 ## v0.2.0 (2025-10-31)
 
 ### Feature
