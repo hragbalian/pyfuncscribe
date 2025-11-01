@@ -98,6 +98,7 @@ def main() -> None:
         # Check if output file exists and if we should skip LLM description generation
         should_add_description = args.add_description
         output_path = Path(args.output) if args.output else None
+        should_write_file = True
 
         if output_path and output_path.exists() and should_add_description:
             # File exists and user wants description - check if content has changed
@@ -113,24 +114,31 @@ def main() -> None:
                 existing_content, report_without_description
             ):
                 print(
-                    "Info: No changes detected in codebase. Skipping LLM description regeneration.",
+                    "Info: No changes detected in codebase. Skipping update.",
                     file=sys.stderr,
                 )
                 should_add_description = False
+                should_write_file = False
 
-        # Generate final report with or without description based on detection
-        report = reporter.generate_report(
-            functions, add_description=should_add_description
-        )
+        # Only generate and write report if there are changes or it's a new file
+        if should_write_file:
+            # Generate final report with or without description based on detection
+            report = reporter.generate_report(
+                functions, add_description=should_add_description
+            )
 
-        # Output report
-        if output_path:
-            output_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(output_path, "w", encoding="utf-8") as f:
-                f.write(report)
-            print(f"Report generated successfully: {args.output}", file=sys.stderr)
+            # Output report
+            if output_path:
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(output_path, "w", encoding="utf-8") as f:
+                    f.write(report)
+                print(f"Report generated successfully: {args.output}", file=sys.stderr)
+            else:
+                print(report)
         else:
-            print(report)
+            # No changes detected and output file exists - don't write anything
+            if output_path:
+                print(f"Report already up-to-date: {args.output}", file=sys.stderr)
 
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
