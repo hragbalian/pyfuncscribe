@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyfuncscribe"
-version = "0.4.0"
+version = "0.5.0"
 description = "A CLI tool to generate comprehensive markdown reports of Python functions in a codebase"
 readme = "README.md"
 requires-python = ">=3.8"
