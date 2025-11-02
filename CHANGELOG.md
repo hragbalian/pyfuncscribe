@@ -2,6 +2,23 @@
 
 
 
+## v0.4.0 (2025-11-01)
+
+### Feature
+
+* feat: added boolean recursive to control which files to include in extraction ([`99c784e`](https://github.com/hragbalian/pyfuncscribe/commit/99c784e02c1e73d55808183bfa09811b4d503444))
+
+### Test
+
+* test: added pytests ([`83eff86`](https://github.com/hragbalian/pyfuncscribe/commit/83eff86ee6d4ec45381311806b8c4fcd5c7c017d))
+
+### Unknown
+
+* bug: fix overwriting unchanged file ([`4f1f8be`](https://github.com/hragbalian/pyfuncscribe/commit/4f1f8be2175e7d8e1fdb39b40d60390e0223188b))
+
+* bug: fix change detection ([`e748b6b`](https://github.com/hragbalian/pyfuncscribe/commit/e748b6b6cdb8871ed9090722f740ae3b63542fd2))
+
+
 ## v0.3.0 (2025-11-01)
 
 ### Feature
