@@ -109,6 +109,18 @@ pyfuncscribe --add-description -o report.md
 pyfuncscribe -d -o report.md
 ```
 
+### Create Empty Reports
+
+By default, if no functions are found, no report file is created and a message is printed. To create a report even when no functions are found:
+
+```bash
+pyfuncscribe --include-empty
+# or
+pyfuncscribe --include-empty -o report.md
+```
+
+This is useful for CI/CD pipelines or documentation systems that expect a report file to always exist.
+
 ### Combined Options
 
 Scan a specific directory, include commented code, add AI description, use brief docstrings, and save to file:
@@ -126,6 +138,9 @@ pyfuncscribe -r src -c -d -b -o docs/api_reference.md
 | `--brief` | `-b` | Include only the first line of docstrings | Full docstrings |
 | `--include-commented` | `-c` | Include functions that are commented out | Ignore commented code |
 | `--add-description` | `-d` | Add LLM-generated description (requires `ANTHROPIC_API_KEY`) | No description |
+| `--include-empty` | - | Create a report even if no functions are found | Don't create report if empty |
+| `--recursive` | - | Recursively search subdirectories for Python files | Enabled by default |
+| `--no-recursive` | - | Only search the specified directory (no subdirectories) | - |
 | `--version` | `-v` | Show version information | - |
 | `--help` | `-h` | Show help message | - |
 
@@ -244,6 +259,8 @@ Contributions are welcome! Feel free to submit issues or pull requests.
 - Use output redirection or the `-o` flag to save reports for future reference
 - The `--add-description` feature provides a high-level overview perfect for README files or project documentation
 - By default, commented-out code is ignored to keep reports clean and focused on active code
+- Use `--include-empty` when integrating with CI/CD pipelines that expect a report file to always be generated
+- Use `--no-recursive` to generate reports for a single directory without traversing subdirectories
 
 ## Semantic Versioning
 

@@ -64,6 +64,18 @@ class TestParseArgs:
             args = parse_args()
             assert args.recursive is False
 
+    def test_parse_include_empty_flag_default(self):
+        """Test that include-empty flag defaults to False."""
+        with patch("sys.argv", ["pyfuncscribe"]):
+            args = parse_args()
+            assert args.include_empty is False
+
+    def test_parse_include_empty_flag(self):
+        """Test parsing --include-empty flag."""
+        with patch("sys.argv", ["pyfuncscribe", "--include-empty"]):
+            args = parse_args()
+            assert args.include_empty is True
+
 
 class TestMainFunctionality:
     """Test main CLI functionality."""
@@ -332,6 +344,111 @@ def nested_func():
         # Should find both functions
         assert "root_func" in captured.out
         assert "nested_func" in captured.out
+
+
+class TestIncludeEmptyFlag:
+    """Test --include-empty flag behavior."""
+
+    def test_main_with_empty_directory_without_flag(self, temp_dir, capsys):
+        """Test that no report is created when directory is empty and --include-empty is not set."""
+        # temp_dir is empty
+        with patch(
+            "sys.argv",
+            ["pyfuncscribe", "-r", str(temp_dir)],
+        ):
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+            assert exc_info.value.code == 0
+        captured = capsys.readouterr()
+        assert "No functions found" in captured.err
+        # Should not have generated a report
+        assert "# Python Functions Report" not in captured.out
+
+    def test_main_with_empty_directory_with_flag(self, temp_dir, capsys):
+        """Test that report is created when directory is empty and --include-empty is set."""
+        # temp_dir is empty
+        with patch(
+            "sys.argv",
+            ["pyfuncscribe", "-r", str(temp_dir), "--include-empty"],
+        ):
+            main()
+        captured = capsys.readouterr()
+        # Should generate report even though no functions found
+        assert "# Python Functions Report" in captured.out
+        assert "Total functions found: **0**" in captured.out
+
+    def test_main_with_empty_directory_without_flag_output_file(self, temp_dir, capsys):
+        """Test that no file is created when directory is empty and --include-empty is not set."""
+        output_file = temp_dir / "report.md"
+        with patch(
+            "sys.argv",
+            ["pyfuncscribe", "-r", str(temp_dir), "-o", str(output_file)],
+        ):
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+            assert exc_info.value.code == 0
+        captured = capsys.readouterr()
+        assert "No functions found" in captured.err
+        # File should not be created
+        assert not output_file.exists()
+
+    def test_main_with_empty_directory_with_flag_output_file(self, temp_dir, capsys):
+        """Test that file is created when directory is empty and --include-empty is set."""
+        output_file = temp_dir / "report.md"
+        search_dir = temp_dir / "search"
+        search_dir.mkdir()
+
+        with patch(
+            "sys.argv",
+            [
+                "pyfuncscribe",
+                "-r",
+                str(search_dir),
+                "-o",
+                str(output_file),
+                "--include-empty",
+            ],
+        ):
+            main()
+        captured = capsys.readouterr()
+        # File should be created
+        assert output_file.exists()
+        content = output_file.read_text()
+        assert "# Python Functions Report" in content
+        assert "Total functions found: **0**" in content
+        assert "Report generated successfully" in captured.err
+
+    def test_main_with_no_python_files_without_flag(self, temp_dir, capsys):
+        """Test that no report is created when no Python files found and --include-empty is not set."""
+        # Create non-Python files
+        (temp_dir / "file.txt").write_text("Hello")
+        (temp_dir / "script.sh").write_text("#!/bin/bash\necho hello")
+
+        with patch(
+            "sys.argv",
+            ["pyfuncscribe", "-r", str(temp_dir)],
+        ):
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+            assert exc_info.value.code == 0
+        captured = capsys.readouterr()
+        assert "No functions found" in captured.err
+        assert "# Python Functions Report" not in captured.out
+
+    def test_main_with_no_python_files_with_flag(self, temp_dir, capsys):
+        """Test that report is created when no Python files found but --include-empty is set."""
+        # Create non-Python files
+        (temp_dir / "file.txt").write_text("Hello")
+        (temp_dir / "script.sh").write_text("#!/bin/bash\necho hello")
+
+        with patch(
+            "sys.argv",
+            ["pyfuncscribe", "-r", str(temp_dir), "--include-empty"],
+        ):
+            main()
+        captured = capsys.readouterr()
+        assert "# Python Functions Report" in captured.out
+        assert "Total functions found: **0**" in captured.out
 
 
 class TestCLIMessages:

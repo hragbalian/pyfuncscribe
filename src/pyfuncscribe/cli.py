@@ -78,6 +78,13 @@ Examples:
         help="Do not recursively search subdirectories (only search the specified directory)",
     )
 
+    parser.add_argument(
+        "--include-empty",
+        action="store_true",
+        default=False,
+        help="Create a report even if no functions are found (default: do not create report if empty)",
+    )
+
     parser.add_argument("-v", "--version", action="version", version="%(prog)s 0.0.1")
 
     return parser.parse_args()
@@ -107,7 +114,10 @@ def main() -> None:
         functions = extractor.extract_all_functions()
 
         if not functions:
-            print(f"Warning: No functions found in '{args.root}'", file=sys.stderr)
+            if not args.include_empty:
+                print(f"No functions found in '{args.root}'", file=sys.stderr)
+                sys.exit(0)
+            # If --include-empty is set, continue to generate report with empty list
 
         # Generate report
         reporter = MarkdownReporter(brief_docstring=args.brief)
