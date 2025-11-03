@@ -1,6 +1,6 @@
 """Tests for the MarkdownReporter class."""
 
-from pyfuncscribe.extractor import FunctionInfo
+from pyfuncscribe.extractor import DataclassInfo, FunctionInfo
 from pyfuncscribe.reporter import MarkdownReporter
 
 
@@ -296,6 +296,263 @@ class TestGroupingByDirectory:
         # Find positions of function names
         pos_alpha = report.find("alpha_func")
         pos_zebra = report.find("zebra_func")
+
+        # alpha should come before zebra
+        assert pos_alpha < pos_zebra
+
+
+class TestDataclassReporting:
+    """Test dataclass reporting functionality."""
+
+    def test_generate_report_with_dataclasses(self):
+        """Test that report is generated with dataclasses."""
+        dataclasses = [
+            DataclassInfo(
+                name="Person",
+                docstring="A person record.",
+                file_path="models.py",
+                directory=".",
+                signature="class Person()",
+                line_number=5,
+                fields=["name: str", "age: int"],
+                decorators=["@dataclass"],
+            ),
+        ]
+        reporter = MarkdownReporter(brief_docstring=False)
+        report = reporter.generate_report(
+            [], add_description=False, dataclasses=dataclasses
+        )
+
+        assert "# Python Functions Report" in report
+        assert "Total dataclasses found: **1**" in report
+        assert "Person" in report
+        assert "name: str" in report
+        assert "age: int" in report
+
+    def test_generate_report_with_functions_and_dataclasses(self, sample_functions):
+        """Test report with both functions and dataclasses."""
+        dataclasses = [
+            DataclassInfo(
+                name="Address",
+                docstring="An address.",
+                file_path="models.py",
+                directory=".",
+                signature="class Address()",
+                line_number=10,
+                fields=["street: str", "city: str"],
+                decorators=["@dataclass"],
+            ),
+        ]
+        reporter = MarkdownReporter(brief_docstring=False)
+        report = reporter.generate_report(
+            sample_functions, add_description=False, dataclasses=dataclasses
+        )
+
+        assert "Total functions found: **2**" in report
+        assert "Total dataclasses found: **1**" in report
+        assert "test_function_1" in report
+        assert "Address" in report
+
+    def test_dataclass_fields_displayed(self):
+        """Test that dataclass fields are displayed."""
+        dataclasses = [
+            DataclassInfo(
+                name="Product",
+                docstring="A product.",
+                file_path="models.py",
+                directory=".",
+                signature="class Product()",
+                line_number=1,
+                fields=["name: str", "price: float", "quantity: int"],
+                decorators=["@dataclass"],
+            ),
+        ]
+        reporter = MarkdownReporter(brief_docstring=False)
+        report = reporter.generate_report(
+            [], add_description=False, dataclasses=dataclasses
+        )
+
+        assert "**Fields:**" in report
+        assert "- `name: str`" in report
+        assert "- `price: float`" in report
+        assert "- `quantity: int`" in report
+
+    def test_dataclass_in_table_of_contents(self):
+        """Test that dataclasses appear in table of contents."""
+        dataclasses = [
+            DataclassInfo(
+                name="User",
+                docstring="A user.",
+                file_path="models.py",
+                directory=".",
+                signature="class User()",
+                line_number=1,
+                fields=["id: int", "name: str"],
+                decorators=["@dataclass"],
+            ),
+        ]
+        reporter = MarkdownReporter(brief_docstring=False)
+        report = reporter.generate_report(
+            [], add_description=False, dataclasses=dataclasses
+        )
+
+        assert "## Table of Contents" in report
+        assert "[User]" in report
+        assert "#user" in report.lower()
+
+    def test_dataclass_signature_included(self):
+        """Test that dataclass signatures are included."""
+        dataclasses = [
+            DataclassInfo(
+                name="Config",
+                docstring="Configuration.",
+                file_path="config.py",
+                directory=".",
+                signature="class Config()",
+                line_number=1,
+                fields=["debug: bool"],
+                decorators=["@dataclass"],
+            ),
+        ]
+        reporter = MarkdownReporter(brief_docstring=False)
+        report = reporter.generate_report(
+            [], add_description=False, dataclasses=dataclasses
+        )
+
+        assert "class Config()" in report
+
+    def test_dataclass_decorators_displayed(self):
+        """Test that dataclass decorators are displayed."""
+        dataclasses = [
+            DataclassInfo(
+                name="Settings",
+                docstring="Settings.",
+                file_path="settings.py",
+                directory=".",
+                signature="class Settings()",
+                line_number=1,
+                fields=["timeout: int"],
+                decorators=["@dataclass", "@frozen"],
+            ),
+        ]
+        reporter = MarkdownReporter(brief_docstring=False)
+        report = reporter.generate_report(
+            [], add_description=False, dataclasses=dataclasses
+        )
+
+        assert "**Decorators:**" in report
+        assert "@dataclass" in report
+        assert "@frozen" in report
+
+    def test_dataclass_file_location_displayed(self):
+        """Test that dataclass file locations are displayed."""
+        dataclasses = [
+            DataclassInfo(
+                name="Schema",
+                docstring="Schema.",
+                file_path="schema.py",
+                directory=".",
+                signature="class Schema()",
+                line_number=42,
+                fields=["version: str"],
+                decorators=["@dataclass"],
+            ),
+        ]
+        reporter = MarkdownReporter(brief_docstring=False)
+        report = reporter.generate_report(
+            [], add_description=False, dataclasses=dataclasses
+        )
+
+        assert "**File:** `schema.py:42`" in report
+
+    def test_dataclass_docstring_displayed(self):
+        """Test that dataclass docstrings are displayed."""
+        dataclasses = [
+            DataclassInfo(
+                name="Status",
+                docstring="Status information.",
+                file_path="status.py",
+                directory=".",
+                signature="class Status()",
+                line_number=1,
+                fields=["code: int"],
+                decorators=["@dataclass"],
+            ),
+        ]
+        reporter = MarkdownReporter(brief_docstring=False)
+        report = reporter.generate_report(
+            [], add_description=False, dataclasses=dataclasses
+        )
+
+        assert "**Documentation:**" in report
+        assert "Status information." in report
+
+    def test_dataclasses_grouped_by_directory(self):
+        """Test that dataclasses are grouped by directory."""
+        dataclasses = [
+            DataclassInfo(
+                name="Root",
+                docstring="Root.",
+                file_path="root.py",
+                directory=".",
+                signature="class Root()",
+                line_number=1,
+                fields=["x: int"],
+                decorators=["@dataclass"],
+            ),
+            DataclassInfo(
+                name="Sub",
+                docstring="Sub.",
+                file_path="subdir/sub.py",
+                directory="subdir",
+                signature="class Sub()",
+                line_number=1,
+                fields=["y: int"],
+                decorators=["@dataclass"],
+            ),
+        ]
+        reporter = MarkdownReporter(brief_docstring=False)
+        report = reporter.generate_report(
+            [], add_description=False, dataclasses=dataclasses
+        )
+
+        assert "## Directory: `(root)`" in report or "## Directory: `.`" in report
+        assert "## Directory: `subdir`" in report
+        assert "Root" in report
+        assert "Sub" in report
+
+    def test_dataclasses_sorted_within_directory(self):
+        """Test that dataclasses are sorted alphabetically."""
+        dataclasses = [
+            DataclassInfo(
+                name="Zebra",
+                docstring="Z.",
+                file_path="test.py",
+                directory=".",
+                signature="class Zebra()",
+                line_number=1,
+                fields=["x: int"],
+                decorators=["@dataclass"],
+            ),
+            DataclassInfo(
+                name="Alpha",
+                docstring="A.",
+                file_path="test.py",
+                directory=".",
+                signature="class Alpha()",
+                line_number=5,
+                fields=["y: int"],
+                decorators=["@dataclass"],
+            ),
+        ]
+        reporter = MarkdownReporter(brief_docstring=False)
+        report = reporter.generate_report(
+            [], add_description=False, dataclasses=dataclasses
+        )
+
+        # Find positions of dataclass names
+        pos_alpha = report.find("Alpha")
+        pos_zebra = report.find("Zebra")
 
         # alpha should come before zebra
         assert pos_alpha < pos_zebra

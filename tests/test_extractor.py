@@ -426,3 +426,203 @@ def broken_function(:
             # Should extract from good file, skip bad file
             assert len(functions) > 0
             assert functions[0].name == "good_function"
+
+
+class TestDataclassExtraction:
+    """Test dataclass extraction from Python files."""
+
+    def test_extract_dataclasses_from_file(self):
+        """Test extracting dataclasses from a file."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            test_file = Path(tmpdir) / "test.py"
+            test_file.write_text("""
+from dataclasses import dataclass
+
+@dataclass
+class Person:
+    '''A person record.'''
+    name: str
+    age: int
+
+@dataclass
+class Address:
+    '''An address record.'''
+    street: str
+    city: str
+    zipcode: str
+""")
+            extractor = FunctionExtractor(root_dir=tmpdir)
+            dataclasses = extractor.extract_dataclasses_from_file(test_file)
+
+            assert len(dataclasses) == 2
+            names = [dc.name for dc in dataclasses]
+            assert "Person" in names
+            assert "Address" in names
+
+    def test_dataclass_info_has_required_fields(self):
+        """Test that extracted dataclass info has all required fields."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            test_file = Path(tmpdir) / "test.py"
+            test_file.write_text("""
+from dataclasses import dataclass
+
+@dataclass
+class TestClass:
+    '''Test class.'''
+    field1: str
+    field2: int
+""")
+            extractor = FunctionExtractor(root_dir=tmpdir)
+            dataclasses = extractor.extract_dataclasses_from_file(test_file)
+
+            assert len(dataclasses) == 1
+            dc = dataclasses[0]
+            assert dc.name == "TestClass"
+            assert dc.docstring == "Test class."
+            assert dc.file_path is not None
+            assert dc.signature is not None
+            assert dc.line_number > 0
+            assert isinstance(dc.fields, list)
+            assert isinstance(dc.decorators, list)
+
+    def test_extract_dataclass_fields(self):
+        """Test extracting dataclass fields."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            test_file = Path(tmpdir) / "test.py"
+            test_file.write_text("""
+from dataclasses import dataclass
+
+@dataclass
+class Product:
+    '''A product.'''
+    name: str
+    price: float
+    quantity: int
+""")
+            extractor = FunctionExtractor(root_dir=tmpdir)
+            dataclasses = extractor.extract_dataclasses_from_file(test_file)
+
+            assert len(dataclasses) == 1
+            dc = dataclasses[0]
+            assert len(dc.fields) == 3
+            assert any("name" in field for field in dc.fields)
+            assert any("price" in field for field in dc.fields)
+            assert any("quantity" in field for field in dc.fields)
+
+    def test_extract_all_dataclasses_recursive(self):
+        """Test extracting all dataclasses with recursive search."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create nested directory structure
+            nested_dir = Path(tmpdir) / "nested"
+            nested_dir.mkdir()
+
+            root_file = Path(tmpdir) / "root.py"
+            root_file.write_text("""
+from dataclasses import dataclass
+
+@dataclass
+class RootClass:
+    '''Root class.'''
+    field: str
+""")
+
+            nested_file = nested_dir / "nested.py"
+            nested_file.write_text("""
+from dataclasses import dataclass
+
+@dataclass
+class NestedClass:
+    '''Nested class.'''
+    field: int
+""")
+
+            # Extract with recursive=True
+            extractor = FunctionExtractor(root_dir=tmpdir, recursive=True)
+            dataclasses = extractor.extract_all_dataclasses()
+
+            # Should find both dataclasses
+            assert len(dataclasses) == 2
+            names = [dc.name for dc in dataclasses]
+            assert "RootClass" in names
+            assert "NestedClass" in names
+
+    def test_extract_all_dataclasses_non_recursive(self):
+        """Test extracting all dataclasses with non-recursive search."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create nested directory structure
+            nested_dir = Path(tmpdir) / "nested"
+            nested_dir.mkdir()
+
+            root_file = Path(tmpdir) / "root.py"
+            root_file.write_text("""
+from dataclasses import dataclass
+
+@dataclass
+class RootClass:
+    '''Root class.'''
+    field: str
+""")
+
+            nested_file = nested_dir / "nested.py"
+            nested_file.write_text("""
+from dataclasses import dataclass
+
+@dataclass
+class NestedClass:
+    '''Nested class.'''
+    field: int
+""")
+
+            # Extract with recursive=False
+            extractor = FunctionExtractor(root_dir=tmpdir, recursive=False)
+            dataclasses = extractor.extract_all_dataclasses()
+
+            # Should only find the root dataclass
+            assert len(dataclasses) == 1
+            assert dataclasses[0].name == "RootClass"
+
+    def test_dataclass_with_qualified_import(self):
+        """Test extracting dataclass with qualified decorator."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            test_file = Path(tmpdir) / "test.py"
+            test_file.write_text("""
+import dataclasses
+
+@dataclasses.dataclass
+class QualifiedClass:
+    '''A qualified dataclass.'''
+    field: str
+""")
+            extractor = FunctionExtractor(root_dir=tmpdir)
+            dataclasses = extractor.extract_dataclasses_from_file(test_file)
+
+            assert len(dataclasses) == 1
+            assert dataclasses[0].name == "QualifiedClass"
+
+    def test_non_dataclass_not_extracted(self):
+        """Test that regular classes are not extracted as dataclasses."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            test_file = Path(tmpdir) / "test.py"
+            test_file.write_text("""
+class RegularClass:
+    '''A regular class.'''
+    def __init__(self, field):
+        self.field = field
+
+@property
+class PseudoClass:
+    pass
+""")
+            extractor = FunctionExtractor(root_dir=tmpdir)
+            dataclasses = extractor.extract_dataclasses_from_file(test_file)
+
+            # Should not extract any dataclasses
+            assert len(dataclasses) == 0
+
+    def test_dataclass_extractor_init_flag(self):
+        """Test extractor initialization with include_dataclasses flag."""
+        extractor = FunctionExtractor(include_dataclasses=True)
+        assert extractor.include_dataclasses is True
+
+        extractor2 = FunctionExtractor(include_dataclasses=False)
+        assert extractor2.include_dataclasses is False

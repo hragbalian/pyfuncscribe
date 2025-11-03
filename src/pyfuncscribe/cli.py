@@ -85,6 +85,13 @@ Examples:
         help="Create a report even if no functions are found (default: do not create report if empty)",
     )
 
+    parser.add_argument(
+        "--include-dataclasses",
+        action="store_true",
+        default=False,
+        help="Include dataclasses found in files (default: only include functions)",
+    )
+
     parser.add_argument("-v", "--version", action="version", version="%(prog)s 0.0.1")
 
     return parser.parse_args()
@@ -110,10 +117,14 @@ def main() -> None:
             root_dir=args.root,
             include_commented=args.include_commented,
             recursive=args.recursive,
+            include_dataclasses=args.include_dataclasses,
         )
         functions = extractor.extract_all_functions()
+        dataclasses = (
+            extractor.extract_all_dataclasses() if args.include_dataclasses else []
+        )
 
-        if not functions:
+        if not functions and not dataclasses:
             if not args.include_empty:
                 print(f"No functions found in '{args.root}'", file=sys.stderr)
                 sys.exit(0)
@@ -133,7 +144,10 @@ def main() -> None:
 
             # Generate report without description to check if anything changed
             report_without_description = reporter.generate_report(
-                functions, add_description=False, include_description=False
+                functions,
+                add_description=False,
+                include_description=False,
+                dataclasses=dataclasses,
             )
 
             # Check if content has changed
@@ -151,7 +165,9 @@ def main() -> None:
         if should_write_file:
             # Generate final report with or without description based on detection
             report = reporter.generate_report(
-                functions, add_description=should_add_description
+                functions,
+                add_description=should_add_description,
+                dataclasses=dataclasses,
             )
 
             # Output report

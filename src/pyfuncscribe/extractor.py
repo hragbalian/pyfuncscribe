@@ -23,6 +23,20 @@ class FunctionInfo:
     is_async: bool
 
 
+@dataclass
+class DataclassInfo:
+    """Data class to hold information about a Python dataclass."""
+
+    name: str
+    docstring: Optional[str]
+    file_path: str
+    directory: str
+    signature: str
+    line_number: int
+    fields: List[str]
+    decorators: List[str]
+
+
 class FunctionExtractor:
     """Extract function information from Python files."""
 
@@ -31,6 +45,7 @@ class FunctionExtractor:
         root_dir: str = ".",
         include_commented: bool = False,
         recursive: bool = True,
+        include_dataclasses: bool = False,
     ):
         """
         Initialize the function extractor.
@@ -39,10 +54,12 @@ class FunctionExtractor:
             root_dir: Root directory to start searching from
             include_commented: If True, include functions that are commented out
             recursive: If True, recursively search subdirectories; if False, only search root directory
+            include_dataclasses: If True, also extract dataclass information
         """
         self.root_dir = Path(root_dir).resolve()
         self.include_commented = include_commented
         self.recursive = recursive
+        self.include_dataclasses = include_dataclasses
 
     def find_python_files(self) -> List[Path]:
         """
@@ -122,6 +139,130 @@ class FunctionExtractor:
         except (SyntaxError, UnicodeDecodeError):
             # Skip files that can't be parsed
             return []
+
+    def extract_dataclasses_from_file(self, file_path: Path) -> List[DataclassInfo]:
+        """
+        Extract all dataclass definitions from a Python file.
+
+        Args:
+            file_path: Path to the Python file
+
+        Returns:
+            List of DataclassInfo objects
+        """
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                content = f.read()
+
+            tree = ast.parse(content, filename=str(file_path))
+            dataclasses = []
+
+            for node in ast.walk(tree):
+                if isinstance(node, ast.ClassDef):
+                    # Check if class has @dataclass decorator
+                    if self._is_dataclass(node):
+                        dataclass_info = self._extract_dataclass_info(
+                            node, file_path, content
+                        )
+                        if dataclass_info:
+                            dataclasses.append(dataclass_info)
+
+            return dataclasses
+        except (SyntaxError, UnicodeDecodeError):
+            # Skip files that can't be parsed
+            return []
+
+    def _is_dataclass(self, node: ast.ClassDef) -> bool:
+        """
+        Check if a class has the @dataclass decorator.
+
+        Args:
+            node: AST ClassDef node
+
+        Returns:
+            True if class has @dataclass decorator
+        """
+        for decorator in node.decorator_list:
+            # Handle simple decorator: @dataclass
+            if isinstance(decorator, ast.Name) and decorator.id == "dataclass":
+                return True
+            # Handle qualified decorator: @dataclasses.dataclass
+            if isinstance(decorator, ast.Attribute):
+                if decorator.attr == "dataclass":
+                    return True
+        return False
+
+    def _extract_dataclass_info(
+        self, node: ast.ClassDef, file_path: Path, content: str
+    ) -> Optional[DataclassInfo]:
+        """
+        Extract detailed information from a dataclass AST node.
+
+        Args:
+            node: AST ClassDef node
+            file_path: Path to the file containing the dataclass
+            content: Full file content for source extraction
+
+        Returns:
+            DataclassInfo object or None if extraction fails
+        """
+        try:
+            # Extract docstring
+            docstring = ast.get_docstring(node)
+
+            # Extract fields (class variables with annotations)
+            fields = []
+            for item in node.body:
+                if isinstance(item, ast.AnnAssign):
+                    # This is an annotated field
+                    field_str = ast.unparse(item.target)
+                    if item.annotation:
+                        field_str += f": {ast.unparse(item.annotation)}"
+                    fields.append(field_str)
+
+            # Extract decorators
+            decorators = [ast.unparse(dec) for dec in node.decorator_list]
+
+            # Build signature
+            signature = self._build_class_signature(node)
+
+            # Get relative path for cleaner output
+            try:
+                rel_path = file_path.relative_to(self.root_dir)
+            except ValueError:
+                rel_path = file_path
+
+            return DataclassInfo(
+                name=node.name,
+                docstring=docstring,
+                file_path=str(rel_path),
+                directory=str(rel_path.parent),
+                signature=signature,
+                line_number=node.lineno,
+                fields=fields,
+                decorators=decorators,
+            )
+        except Exception:
+            return None
+
+    def _build_class_signature(self, node: ast.ClassDef) -> str:
+        """
+        Build a complete class signature string.
+
+        Args:
+            node: AST ClassDef node
+
+        Returns:
+            Formatted class signature
+        """
+        bases_str = ""
+        if node.bases:
+            bases_list = [ast.unparse(base) for base in node.bases]
+            bases_str = f"({', '.join(bases_list)})"
+        else:
+            bases_str = "()"
+
+        return f"class {node.name}{bases_str}"
 
     def _extract_function_info(
         self, node: ast.FunctionDef, file_path: Path, content: str
@@ -255,3 +396,19 @@ class FunctionExtractor:
             all_functions.extend(functions)
 
         return all_functions
+
+    def extract_all_dataclasses(self) -> List[DataclassInfo]:
+        """
+        Extract all dataclasses from all Python files in the root directory.
+
+        Returns:
+            List of all DataclassInfo objects found
+        """
+        all_dataclasses = []
+        python_files = self.find_python_files()
+
+        for file_path in python_files:
+            dataclasses = self.extract_dataclasses_from_file(file_path)
+            all_dataclasses.extend(dataclasses)
+
+        return all_dataclasses

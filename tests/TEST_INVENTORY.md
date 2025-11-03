@@ -7,9 +7,9 @@ Complete inventory of all tests created for PyFuncScribe, organized by module an
 ## Summary Statistics
 
 - **Total Test Files**: 4
-- **Total Test Classes**: 20+
-- **Total Test Functions**: 80+
-- **Lines of Test Code**: 1,500+
+- **Total Test Classes**: 26
+- **Total Test Functions**: 101
+- **Lines of Test Code**: 2,000+
 
 ## Test Files Breakdown
 
@@ -24,7 +24,7 @@ Complete inventory of all tests created for PyFuncScribe, organized by module an
 ### 2. test_reporter.py
 **Purpose**: Test MarkdownReporter functionality
 
-**56 Test Functions** across 4 test classes:
+**66 Test Functions** across 5 test classes:
 
 #### TestMarkdownReporterBasics (7 tests)
 1. `test_generate_report_with_functions` - Basic report generation
@@ -57,10 +57,22 @@ Complete inventory of all tests created for PyFuncScribe, organized by module an
 1. `test_functions_grouped_by_directory` - Directory grouping
 2. `test_functions_sorted_within_directory` - Alphabetical sorting
 
+#### TestDataclassReporting (10 tests) ⭐ **NEW**
+1. `test_generate_report_with_dataclasses` - Dataclass report generation
+2. `test_generate_report_with_functions_and_dataclasses` - Mixed functions and dataclasses
+3. `test_dataclass_fields_displayed` - Field display with types
+4. `test_dataclass_in_table_of_contents` - TOC inclusion and linking
+5. `test_dataclass_signature_included` - Class signature display
+6. `test_dataclass_decorators_displayed` - Decorator display
+7. `test_dataclass_file_location_displayed` - File and line number display
+8. `test_dataclass_docstring_displayed` - Documentation display
+9. `test_dataclasses_grouped_by_directory` - Directory grouping
+10. `test_dataclasses_sorted_within_directory` - Alphabetical sorting
+
 ### 3. test_cli.py
 **Purpose**: Test CLI functionality and file preservation
 
-**60+ Test Functions** across 6 test classes:
+**68 Test Functions** across 7 test classes:
 
 #### TestParseArgs (5 tests)
 1. `test_parse_default_args` - Default argument parsing
@@ -91,10 +103,20 @@ Complete inventory of all tests created for PyFuncScribe, organized by module an
 1. `test_success_message_when_file_updated` - Success message
 2. `test_up_to_date_message_when_no_changes` - Up-to-date message
 
+#### TestIncludeDataclassesFlag (8 tests) ⭐ **NEW**
+1. `test_parse_include_dataclasses_flag_default` - Flag defaults to False
+2. `test_parse_include_dataclasses_flag` - Flag parsing
+3. `test_main_with_dataclasses` - Dataclass extraction to stdout
+4. `test_main_without_dataclasses_flag` - Dataclasses excluded by default
+5. `test_main_dataclasses_to_file_with_flag` - Dataclass extraction to file
+6. `test_main_dataclasses_in_toc` - Dataclasses in table of contents
+7. `test_main_mixed_functions_and_dataclasses` - Mixed functions and dataclasses
+8. `test_main_include_empty_with_dataclasses` - Empty directory with flag
+
 ### 4. test_extractor.py
 **Purpose**: Test FunctionExtractor functionality
 
-**50+ Test Functions** across 9 test classes:
+**58 Test Functions** across 10 test classes:
 
 #### TestFunctionExtractorInitialization (3 tests)
 1. `test_extractor_init_default` - Default initialization
@@ -136,6 +158,16 @@ Complete inventory of all tests created for PyFuncScribe, organized by module an
 1. `test_invalid_python_file_skipped` - Invalid file handling
 2. `test_extract_all_functions_handles_errors` - Batch error handling
 
+#### TestDataclassExtraction (8 tests) ⭐ **NEW**
+1. `test_extract_dataclasses_from_file` - Dataclass extraction from file
+2. `test_dataclass_info_has_required_fields` - DataclassInfo field validation
+3. `test_extract_dataclass_fields` - Field extraction with types
+4. `test_extract_all_dataclasses_recursive` - Recursive dataclass search
+5. `test_extract_all_dataclasses_non_recursive` - Non-recursive search
+6. `test_dataclass_with_qualified_import` - Qualified decorator handling
+7. `test_non_dataclass_not_extracted` - Regular classes excluded
+8. `test_dataclass_extractor_init_flag` - Extractor initialization flag
+
 ## Test Categories
 
 ### By Functionality
@@ -176,6 +208,36 @@ Complete inventory of all tests created for PyFuncScribe, organized by module an
 - Change detection scenarios
 - Real codebase extraction
 
+## New Features: Dataclass Support
+
+### Overview
+Dataclass support has been added to PyFuncScribe with complete integration throughout the pipeline:
+
+### New DataclassInfo Class
+- Stores dataclass metadata: name, docstring, file path, line number, fields, decorators
+- Parallel structure to FunctionInfo for consistency
+
+### Extraction (8 new tests)
+- Detects `@dataclass` decorator (simple and qualified)
+- Extracts all fields with type annotations
+- Handles nested fields correctly
+- Supports recursive and non-recursive search
+
+### Reporting (10 new tests)
+- Separate dataclass count from function count
+- Displays all fields with types
+- Includes dataclasses in table of contents with proper links
+- Groups dataclasses by directory
+- Sorts alphabetically within directories
+- Formats decorators and file locations
+
+### CLI Integration (8 new tests)
+- New `--include-dataclasses` flag
+- Dataclasses only extracted when flag is set
+- Works with all existing flags (--brief, --recursive, etc.)
+- Updates appear in change detection logic
+- Preserves file when no changes detected
+
 ## Test Coverage Areas
 
 ### Reporter Module
@@ -184,6 +246,9 @@ Complete inventory of all tests created for PyFuncScribe, organized by module an
 - ✓ Function formatting
 - ✓ Directory grouping
 - ✓ Sorting and organization
+- ✓ Dataclass formatting (NEW)
+- ✓ Mixed function and dataclass reports (NEW)
+- ✓ Table of contents with dataclass links (NEW)
 
 ### Extractor Module
 - ✓ File discovery
@@ -191,6 +256,9 @@ Complete inventory of all tests created for PyFuncScribe, organized by module an
 - ✓ Metadata extraction
 - ✓ Signature building
 - ✓ Error handling
+- ✓ Dataclass detection (NEW)
+- ✓ Field extraction with types (NEW)
+- ✓ Decorator detection for dataclasses (NEW)
 
 ### CLI Module
 - ✓ Argument parsing
@@ -198,6 +266,8 @@ Complete inventory of all tests created for PyFuncScribe, organized by module an
 - ✓ Directory creation
 - ✓ Change detection workflow
 - ✓ File preservation logic
+- ✓ --include-dataclasses flag (NEW)
+- ✓ Dataclass integration with existing flags (NEW)
 
 ## Critical Test Scenarios
 
@@ -249,6 +319,11 @@ pytest tests/test_cli.py -v
 # Extractor tests only
 pytest tests/test_extractor.py -v
 
+# Dataclass tests only
+pytest tests/test_extractor.py::TestDataclassExtraction -v
+pytest tests/test_reporter.py::TestDataclassReporting -v
+pytest tests/test_cli.py::TestIncludeDataclassesFlag -v
+
 # File preservation tests
 pytest tests/test_cli.py::TestFilePreservation -v
 
@@ -262,10 +337,10 @@ pytest tests/ -v
 
 ## Test Execution Time
 
-- Reporter tests: ~1-2 seconds
-- CLI tests: ~2-3 seconds (includes real codebase extraction)
-- Extractor tests: ~1-2 seconds
-- **Total**: ~5-7 seconds
+- Reporter tests: ~1-2 seconds (includes 10 new dataclass tests)
+- CLI tests: ~2-3 seconds (includes real codebase extraction and 8 new dataclass tests)
+- Extractor tests: ~1-2 seconds (includes 8 new dataclass extraction tests)
+- **Total**: ~0.36 seconds (all 101 tests)
 
 ## Dependencies for Testing
 

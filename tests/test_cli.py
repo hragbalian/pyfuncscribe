@@ -503,3 +503,208 @@ Test description.
         captured = capsys.readouterr()
         assert "No changes detected" in captured.err
         assert "already up-to-date" in captured.err
+
+
+class TestIncludeDataclassesFlag:
+    """Test --include-dataclasses flag behavior."""
+
+    def test_parse_include_dataclasses_flag_default(self):
+        """Test that include-dataclasses flag defaults to False."""
+        with patch("sys.argv", ["pyfuncscribe"]):
+            args = parse_args()
+            assert args.include_dataclasses is False
+
+    def test_parse_include_dataclasses_flag(self):
+        """Test parsing --include-dataclasses flag."""
+        with patch("sys.argv", ["pyfuncscribe", "--include-dataclasses"]):
+            args = parse_args()
+            assert args.include_dataclasses is True
+
+    def test_main_with_dataclasses(self, temp_dir, capsys):
+        """Test main extracts dataclasses when flag is set."""
+        # Create a Python file with a dataclass
+        test_file = temp_dir / "models.py"
+        test_file.write_text("""
+from dataclasses import dataclass
+
+@dataclass
+class Person:
+    '''A person record.'''
+    name: str
+    age: int
+
+def greet(name: str) -> str:
+    '''Greet someone.'''
+    return f"Hello, {name}!"
+""")
+
+        # Run with --include-dataclasses flag
+        with patch(
+            "sys.argv",
+            ["pyfuncscribe", "-r", str(temp_dir), "--include-dataclasses"],
+        ):
+            main()
+
+        captured = capsys.readouterr()
+        assert "# Python Functions Report" in captured.out
+        assert "Total functions found: **1**" in captured.out
+        assert "Total dataclasses found: **1**" in captured.out
+        assert "Person" in captured.out
+        assert "name: str" in captured.out
+        assert "age: int" in captured.out
+        assert "greet" in captured.out
+
+    def test_main_without_dataclasses_flag(self, temp_dir, capsys):
+        """Test main does not extract dataclasses when flag is not set."""
+        # Create a Python file with a dataclass
+        test_file = temp_dir / "models.py"
+        test_file.write_text("""
+from dataclasses import dataclass
+
+@dataclass
+class Person:
+    '''A person record.'''
+    name: str
+    age: int
+
+def greet(name: str) -> str:
+    '''Greet someone.'''
+    return f"Hello, {name}!"
+""")
+
+        # Run without --include-dataclasses flag
+        with patch(
+            "sys.argv",
+            ["pyfuncscribe", "-r", str(temp_dir)],
+        ):
+            main()
+
+        captured = capsys.readouterr()
+        assert "# Python Functions Report" in captured.out
+        assert "Total functions found: **1**" in captured.out
+        # Should not have dataclass count since flag is not set
+        assert "Total dataclasses found:" not in captured.out
+        assert "Person" not in captured.out
+        assert "greet" in captured.out
+
+    def test_main_dataclasses_to_file_with_flag(self, temp_dir):
+        """Test main outputs dataclasses to file when flag is set."""
+        # Create a Python file with a dataclass
+        test_file = temp_dir / "models.py"
+        test_file.write_text("""
+from dataclasses import dataclass
+
+@dataclass
+class Product:
+    '''A product.'''
+    name: str
+    price: float
+""")
+
+        output_file = temp_dir / "report.md"
+
+        # Run with --include-dataclasses flag and output file
+        with patch(
+            "sys.argv",
+            [
+                "pyfuncscribe",
+                "-r",
+                str(temp_dir),
+                "-o",
+                str(output_file),
+                "--include-dataclasses",
+            ],
+        ):
+            main()
+
+        assert output_file.exists()
+        content = output_file.read_text()
+        assert "Total dataclasses found: **1**" in content
+        assert "Product" in content
+        assert "name: str" in content
+        assert "price: float" in content
+
+    def test_main_dataclasses_in_toc(self, temp_dir, capsys):
+        """Test that dataclasses appear in table of contents."""
+        test_file = temp_dir / "models.py"
+        test_file.write_text("""
+from dataclasses import dataclass
+
+@dataclass
+class User:
+    '''A user.'''
+    id: int
+    name: str
+""")
+
+        with patch(
+            "sys.argv",
+            ["pyfuncscribe", "-r", str(temp_dir), "--include-dataclasses"],
+        ):
+            main()
+
+        captured = capsys.readouterr()
+        assert "## Table of Contents" in captured.out
+        assert "[User]" in captured.out
+        assert "#user" in captured.out.lower()
+
+    def test_main_mixed_functions_and_dataclasses(self, temp_dir, capsys):
+        """Test report with both functions and dataclasses."""
+        test_file = temp_dir / "code.py"
+        test_file.write_text("""
+from dataclasses import dataclass
+
+@dataclass
+class Config:
+    '''Configuration.'''
+    debug: bool
+
+def setup(config: Config) -> None:
+    '''Setup the application.'''
+    pass
+
+@dataclass
+class Status:
+    '''Status info.'''
+    code: int
+
+def check_status() -> Status:
+    '''Check status.'''
+    pass
+""")
+
+        with patch(
+            "sys.argv",
+            ["pyfuncscribe", "-r", str(temp_dir), "--include-dataclasses"],
+        ):
+            main()
+
+        captured = capsys.readouterr()
+        assert "Total functions found: **2**" in captured.out
+        assert "Total dataclasses found: **2**" in captured.out
+        assert "Config" in captured.out
+        assert "Status" in captured.out
+        assert "setup" in captured.out
+        assert "check_status" in captured.out
+
+    def test_main_include_empty_with_dataclasses(self, temp_dir, capsys):
+        """Test --include-empty with --include-dataclasses when nothing found."""
+        # temp_dir is empty
+
+        with patch(
+            "sys.argv",
+            [
+                "pyfuncscribe",
+                "-r",
+                str(temp_dir),
+                "--include-dataclasses",
+                "--include-empty",
+            ],
+        ):
+            main()
+
+        captured = capsys.readouterr()
+        assert "# Python Functions Report" in captured.out
+        assert "Total functions found: **0**" in captured.out
+        # Should not print dataclass count if no dataclasses found
+        assert "Total dataclasses found: **0**" not in captured.out
