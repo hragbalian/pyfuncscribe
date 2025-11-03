@@ -2,6 +2,17 @@
 
 
 
+## v0.6.0 (2025-11-03)
+
+### Feature
+
+* feat: optional dataclass extraction into report ([`3d7c440`](https://github.com/hragbalian/pyfuncscribe/commit/3d7c440e99f285e55f7faec3cc8c5b420dbe196e))
+
+### Unknown
+
+* Merge branch &#39;main&#39; of https://github.com/hragbalian/pyfuncscribe ([`ae95fd7`](https://github.com/hragbalian/pyfuncscribe/commit/ae95fd738e0d0ad9b2e721c1038dae2ec3edfafd))
+
+
 ## v0.5.0 (2025-11-02)
 
 ### Feature
