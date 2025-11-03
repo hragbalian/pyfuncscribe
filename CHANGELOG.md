@@ -2,6 +2,15 @@
 
 
 
+## v0.5.0 (2025-11-02)
+
+### Feature
+
+* feat: new include-empty flag to create reports if no functions found ([`3b5a046`](https://github.com/hragbalian/pyfuncscribe/commit/3b5a046bf439b045968ec0c3f0213acfff37efa9))
+
+* feat: new include-empty flag to create reports if no functions found ([`137dd0d`](https://github.com/hragbalian/pyfuncscribe/commit/137dd0df6245c3b03c33b84720fa29d3f3bb9426))
+
+
 ## v0.4.0 (2025-11-01)
 
 ### Feature
